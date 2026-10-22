@@ -31,9 +31,9 @@ invent scope, features or options beyond the task.
   `fixtures/`: each image's task and the reference's answers.
 - [fusor-ai](https://github.com/fusor-rs/fusor-ai): the model (`oxr`), its
   compiler (`oxr-compile`), the kernels, blocks and bundle format come from
-  crates.io as `fusor-ai-*` crates; `vendor/fusor-ai`, a git submodule,
-  supplies what crates.io does not carry: the browser loader and compute pool,
-  the runtime build, the import check and the dev server.
+  `vendor/fusor-ai`, a git submodule pinned to a commit pushed to fusor-ai, with
+  the browser loader and compute pool, the runtime build, the import check and
+  the dev server.
 
 What belongs where: model code (dimensions, tensor names, wiring, the image
 preprocessing, the visual vocabulary, the prompts, the reading loop) and
@@ -58,15 +58,11 @@ Constraints that hold everywhere:
   entropy. fusor-ai's `scripts/check-wasm-imports.mjs` is the check (`just
   runtimes` runs it on every build); never widen its allowlists to make a build
   pass.
-- The `fusor-ai-*` versions in `[workspace.dependencies]` and `vendor/fusor-ai`
-  name the same fusor-ai release (the submodule at its `v<version>` tag), and
-  move together in a change of their own, with the parity numbers and the e2e
-  result it gave. `[patch.crates-io]` entries pointing at a fusor-ai checkout
-  are for trying an unreleased change locally and never land. No copies of
-  fusor-ai code here. Until fusor-ai publishes `fusor-ai-oxr`, the model is
-  built in fusor-ai and tried here through such a patch, with the submodule at
-  the fusor-ai commit that carries the runtime build it needs; nothing that
-  needs an unpublished fusor-ai lands here.
+- fusor-ai comes only from `vendor/fusor-ai`: path dependencies in
+  `[workspace.dependencies]`, never a crates.io version, a `[patch]` table or a
+  sibling checkout. The submodule moves to another pushed fusor-ai commit in a
+  change of its own, with the parity numbers and the e2e result it gave. No
+  copies of fusor-ai code here.
 - The reference is OXR-1.0's own modeling code in transformers at the version
   the golden harness pins, with its Pillow image processor (bilinear), SoMark's
   pixel budget (its vLLM plugin's 200 704 to 921 600 pixels) and the image's
