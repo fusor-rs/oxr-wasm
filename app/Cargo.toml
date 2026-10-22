@@ -34,6 +34,7 @@ base-path = "/"
 # The engine worker and the runtimes `just runtimes` builds next to it.
 "/engine/" = "engine"
 "/brand/fusor-ai.svg" = "../vendor/fusor-ai/assets/brand/fusor-ai.svg"
+"/base.css" = "../vendor/fusor-ai/packages/ui/base.css"
 "/brand/oxr.svg" = "../assets/brand/oxr.svg"
 # KaTeX's stylesheet and fonts, beside the page: formulas render without another origin.
 "/katex/katex.min.css" = "node_modules/katex/dist/katex.min.css"
