@@ -1,11 +1,12 @@
 // Runs a single-threaded wasm runtime build in Node against a bundle: pushes every part the way
 // the browser loader does, then reads each PNG fixture with its task, step by step as the page
 // does, and prints the time to the first token, the tokens per second and the character error
-// rate against the reference's answer (fixtures/references.json).
+// rate against the reference's answer (fixtures/references.json). With `--out`, each answer is
+// written to `<dir>/<image>.txt`.
 //
-//   node scripts/node-smoke.mjs dist/model --build web-single [--images fixtures/images]
+//   node scripts/node-smoke.mjs dist/model --build web-single [--images fixtures/images] [--out dir]
 
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { inflateSync } from 'node:zlib';
@@ -16,6 +17,7 @@ const { values, positionals } = parseArgs({
   options: {
     build: { type: 'string', default: 'web-single' },
     images: { type: 'string', default: 'fixtures/images' },
+    out: { type: 'string' },
   },
 });
 // The PNG fixtures: Node decodes PNG with zlib alone; the JPEG ones are read in the browser (e2e).
@@ -44,6 +46,7 @@ console.log(`${values.build}: load ${((performance.now() - t0) / 1000).toFixed(2
 const tasks = JSON.parse(readFileSync('fixtures/tasks.json', 'utf8'));
 const references = JSON.parse(readFileSync('fixtures/references.json', 'utf8'));
 let failed = false;
+if (values.out) mkdirSync(values.out, { recursive: true });
 for (const name of IMAGES) {
   const { width, height, rgba } = readPng(readFileSync(join(values.images, `${name}.png`)));
   const start = performance.now();
@@ -60,6 +63,7 @@ for (const name of IMAGES) {
   const { rate, errors, characters } = characterErrorRate(references[name].text, progress.text);
   console.log(`  ${name} (${tasks[name]}, ${width}×${height}): first token ${first.toFixed(2)}s, ${progress.tokens} tokens in ${seconds.toFixed(2)}s (${speed.toFixed(1)}/s); CER ${rate.toFixed(4)} (${errors}/${characters})`);
   failed ||= rate > MAX_ERROR_RATE;
+  if (values.out) writeFileSync(join(values.out, `${name}.txt`), `${progress.text}\n`);
 }
 if (failed) process.exit(1);
 

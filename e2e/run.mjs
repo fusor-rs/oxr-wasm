@@ -10,7 +10,7 @@
 //   PORT=8787 node e2e/run.mjs [--threads 8] [--build web-threaded] [--max-cer 0.02]
 //   node e2e/run.mjs --url https://example.org    # a deployed page, no local server
 //
-// Results (JSON, answers, screenshots) go to e2e/results/<timestamp>-*.
+// Results (JSON, answers, screenshots) go to e2e/results/<timestamp>-*, or to `--out <dir>`.
 
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
@@ -29,6 +29,7 @@ const { values } = parseArgs({
     'max-cer': { type: 'string', default: '0.02' },
     url: { type: 'string' },
     model: { type: 'string' },
+    out: { type: 'string' },
   },
 });
 const PORT = process.env.PORT ?? '8787';
@@ -44,7 +45,7 @@ const IMAGES = [
   { name: 'formula', file: 'formula.png' },
   { name: 'book', file: 'book.jpg', maxCer: BOOK_MAX_CER },
 ];
-const RUN_DIR = join(ROOT, 'e2e/results');
+const RUN_DIR = values.out ?? join(ROOT, 'e2e/results');
 const STAMP = new Date().toISOString().replace(/[:.]/g, '-');
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
@@ -153,5 +154,5 @@ try {
 
 results.failures = failures;
 writeFileSync(join(RUN_DIR, `${STAMP}.json`), JSON.stringify(results, null, 2));
-log(failures.length ? `e2e FAILED (${failures.length})` : 'e2e passed', `-> e2e/results/${STAMP}.json`);
+log(failures.length ? `e2e FAILED (${failures.length})` : 'e2e passed', `-> ${values.out ?? 'e2e/results'}/${STAMP}.json`);
 process.exit(failures.length ? 1 : 0);
