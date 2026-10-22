@@ -3,6 +3,7 @@
 use std::time::Instant;
 
 use anyhow::Result;
+use bundle::Engine as _;
 use oxr::pipeline::Stage;
 use oxr::prompt::Task;
 use oxr::session::{Engine, Request};

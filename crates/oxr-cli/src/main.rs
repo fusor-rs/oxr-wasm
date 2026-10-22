@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use anyhow::{Context, Result};
-use bundle::{Manifest, Store};
+use bundle::{Engine as _, Manifest, Store};
 use clap::{Parser, Subcommand};
 use oxr::prompt::Task;
 use oxr::session::{Engine, Request};
