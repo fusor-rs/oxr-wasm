@@ -55,9 +55,9 @@ and fusor-ai's `scripts/install-tools.sh` the pinned wasm-bindgen and binaryen i
 ## The README's images
 
 `assets/brand/banner.html` and `assets/benchmarks/benchmarks.html` are the README's banner and
-benchmark summary; `node scripts/render-images.mjs` renders each into a light and a dark PNG next
-to it, with the e2e's Playwright (`cd e2e && npm ci` first). The benchmark page's numbers come
-from `benchmarks.md`: change them together.
+benchmark summary; `node scripts/render-images.mjs` renders each into a light and a dark PNG
+next to it, with the e2e's Playwright (`cd vendor/fusor-ai/packages/e2e && npm ci` first). The
+benchmark page's numbers come from `benchmarks.md`: change them together.
 
 ## Deploying the site
 

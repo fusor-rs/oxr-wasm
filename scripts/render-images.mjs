@@ -1,6 +1,7 @@
-// Renders the README's images, light and dark, with the e2e's Playwright (`cd e2e && npm ci`
-// first): each page in IMAGES into <name>.png and <name>-dark.png beside it.
-import { chromium } from '../e2e/node_modules/playwright/index.mjs';
+// Renders the README's images, light and dark, with the e2e's Playwright (`cd
+// vendor/fusor-ai/packages/e2e && npm ci` first): each page in IMAGES into <name>.png and
+// <name>-dark.png beside it.
+import { chromium } from '../vendor/fusor-ai/packages/e2e/node_modules/playwright/index.mjs';
 import { fileURLToPath } from 'node:url';
 
 const IMAGES = [
