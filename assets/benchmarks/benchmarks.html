@@ -1,0 +1,124 @@
+<!doctype html>
+<!--
+  The README's benchmark summary: oxr-wasm in Chrome and against the PyTorch reference natively,
+  from benchmarks.md. Rendered at 1400×1090, twice the pixels, by
+  `node scripts/render-images.mjs` into benchmarks.png and benchmarks-dark.png (`?theme=dark`).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --canvas: #faf9f6; --card: #ffffff; --ink: #272a2c; --soft: #5c5f61; --faint: #8b8d8d;
+    --hairline: #e3e0d9; --ours: #df5036; --theirs: #3f78b5;
+  }
+  :root.dark {
+    --canvas: #121314; --card: #1a1b1c; --ink: #f2f1ed; --soft: #b4b5b3; --faint: #8b8d8d;
+    --hairline: #303335; --ours: #e8603f; --theirs: #4a87d0;
+  }
+  html, body { margin: 0; }
+  body {
+    width: 1400px; height: 1090px; box-sizing: border-box; padding: 56px 64px;
+    background: var(--canvas); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; }
+  h1 { margin: 0; font-size: 36px; letter-spacing: -0.02em; }
+  header p { margin: 8px 0 0; font-size: 19px; color: var(--soft); }
+  .legend { display: flex; flex-direction: column; gap: 10px; font-size: 19px; }
+  .legend span { display: flex; align-items: center; gap: 10px; }
+  .legend i { width: 18px; height: 18px; border-radius: 4px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .panel { background: var(--card); border: 1px solid var(--hairline); border-radius: 16px; padding: 24px 28px; }
+  .panel h2 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+  .panel .unit { margin: 4px 0 0; font-size: 16px; color: var(--faint); }
+  .verdict { margin: 12px 0 18px; font-size: 19px; font-weight: 600; }
+  .verdict.loss { color: var(--soft); }
+  .group { display: grid; grid-template-columns: 150px 1fr; align-items: center; column-gap: 12px; margin-top: 12px; }
+  .group > b { font-size: 16px; font-weight: 500; color: var(--soft); }
+  .bars { display: flex; flex-direction: column; gap: 2px; }
+  .row { display: flex; align-items: center; gap: 10px; height: 22px; font-size: 16px; }
+  .bar { height: 22px; border-radius: 0 4px 4px 0; }
+  .row.none { color: var(--faint); font-style: italic; }
+  .stat { display: flex; align-items: baseline; gap: 16px; margin-top: 18px; }
+  .stat b { font-size: 72px; letter-spacing: -0.04em; line-height: 1; }
+  .stat span { font-size: 19px; color: var(--soft); line-height: 1.4; }
+  footer { margin-top: 22px; font-size: 15px; color: var(--faint); line-height: 1.5; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>oxr-wasm, in Chrome and against PyTorch</h1>
+      <p>The same model, SoMark's OXR-1.0, on one Apple M4 Pro; each panel says which way is better.</p>
+    </div>
+    <div class="legend">
+      <span><i style="background: var(--ours)"></i>oxr-wasm (fusor-ai)</span>
+      <span><i style="background: var(--theirs)"></i>PyTorch reference, f32, CPU</span>
+    </div>
+  </header>
+  <div class="grid" id="grid"></div>
+  <footer>
+    Images: PaddleOCR's own test files, a formula (912 patches), a seal (1600) and a photographed book page (2992).
+    Chrome: the page, threaded or single-threaded, 1420 MB bundle. Native: the CLI and PyTorch with eight threads,
+    medians of three runs while other work loaded the machine. Full tables, methods and caveats: benchmarks.md.
+  </footer>
+<script>
+  const PANELS = [
+    {
+      title: 'First token in Chrome', unit: 'Seconds from the image to the answer\'s start: shorter is better',
+      verdict: 'A formula in 1.3 s, a book page in 5.3 s on eight threads', format: (v) => `${v.toFixed(1)} s`,
+      none: 'PyTorch has no browser build',
+      groups: [['Formula, 1 thread', 7.30, null], ['Formula, 8', 1.29, null], ['Book, 1 thread', 32.18, null], ['Book, 8', 5.32, null]],
+    },
+    {
+      title: 'Writing the answer in Chrome', unit: 'Tokens per second after the first: longer is better',
+      verdict: 'Faster than you read it, even on one thread', format: (v) => `${v}/s`,
+      none: 'PyTorch has no browser build',
+      groups: [['Formula, 1 thread', 71, null], ['Formula, 8', 213, null], ['Book, 1 thread', 52, null], ['Book, 8', 167, null]],
+    },
+    {
+      title: 'First token, native', unit: 'Seconds, eight threads: shorter is better',
+      verdict: 'Sooner on a crop; PyTorch is 1.1–1.3× sooner on large images', loss: true, format: (v) => `${v.toFixed(2)} s`,
+      groups: [['Formula', 1.29, 1.70], ['Seal', 2.47, 2.23], ['Book', 5.49, 4.30]],
+    },
+    {
+      title: 'Writing the answer, native', unit: 'Tokens per second, eight threads: longer is better',
+      verdict: '7–8× PyTorch\'s speed', format: (v) => `${v}/s`,
+      groups: [['Formula', 249, 31], ['Seal', 236, 34], ['Book', 190, 29]],
+    },
+    {
+      title: 'Download', unit: 'Megabytes: the bundle against the bf16 checkpoint',
+      verdict: '46% of the checkpoint: a 4-bit visual head, 7 bits elsewhere', format: (v) => `${v} MB`,
+      groups: [['Weights', 1420, 3069]],
+    },
+  ];
+
+  const grid = document.getElementById('grid');
+  const row = (value, color, scale, panel) => value === null
+    ? `<div class="row none">${panel.none}</div>`
+    : `<div class="row"><div class="bar" style="width:${(value / scale) * 100}%;background:${color}"></div>${panel.format(value)}</div>`;
+
+  for (const panel of PANELS) {
+    const scale = Math.max(...panel.groups.flatMap(([, ours, theirs]) => [ours, theirs ?? 0])) * 1.32;
+    const groups = panel.groups.map(([label, ours, theirs]) => `
+      <div class="group"><b>${label}</b><div class="bars">
+        ${row(ours, 'var(--ours)', scale, panel)}${theirs === null ? '' : row(theirs, 'var(--theirs)', scale, panel)}
+      </div></div>`).join('');
+    grid.insertAdjacentHTML('beforeend', `
+      <section class="panel">
+        <h2>${panel.title}</h2><p class="unit">${panel.unit}</p>
+        <p class="verdict${panel.loss ? ' loss' : ''}">${panel.verdict}</p>${groups}
+      </section>`);
+  }
+  grid.insertAdjacentHTML('beforeend', `
+    <section class="panel">
+      <h2>Agreement with the reference</h2><p class="unit">The answers against PyTorch's, 1420 MB bundle</p>
+      <div class="stat"><b>7/8</b><span>pages read exactly as the reference, the eighth<br>a formula with one alignment mark moved</span></div>
+    </section>`);
+
+  if (new URLSearchParams(location.search).get('theme') === 'dark') document.documentElement.classList.add('dark');
+</script>
+</body>
+</html>

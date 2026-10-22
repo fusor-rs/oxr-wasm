@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+  The README banner: fusor-ai × SoMark OXR. Rendered at 1280×400, twice the pixels, by
+  `node scripts/render-images.mjs` into banner.png and banner-dark.png (`?theme=dark`). OXR's
+  wordmark is typeset, its X in SoMark's orange, as the model card writes it.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --canvas: #faf9f6; --ink: #272a2c; --soft: #5c5f61; --hairline: #e3e0d9; --orange: #de7802; }
+  :root.dark { --canvas: #121314; --ink: #f2f1ed; --soft: #b4b5b3; --hairline: #303335; }
+  html, body { margin: 0; }
+  body {
+    width: 1280px; height: 400px; display: flex; align-items: center; justify-content: center;
+    background: var(--canvas); color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .banner { display: flex; align-items: center; gap: 64px; }
+  .marks { display: flex; align-items: center; gap: 28px; padding-right: 64px; border-right: 1px solid var(--hairline); }
+  .marks img { height: 150px; }
+  .times { font-size: 44px; color: var(--soft); font-weight: 300; }
+  .oxr { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+  .oxr b { font-size: 104px; font-weight: 600; letter-spacing: 0.01em; }
+  .oxr b span { color: var(--orange); }
+  .oxr small { margin-top: 10px; font-size: 20px; color: var(--soft); letter-spacing: 0.02em; }
+  h1 { margin: 0; font-size: 64px; letter-spacing: -0.03em; font-weight: 700; line-height: 1; }
+  p { margin: 18px 0 0; font-size: 26px; color: var(--soft); line-height: 1.35; }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="marks">
+      <img src="../../vendor/fusor-ai/assets/brand/fusor-ai.svg" alt="fusor-ai">
+      <span class="times">×</span>
+      <div class="oxr"><b>O<span>X</span>R</b><small>by SoMark</small></div>
+    </div>
+    <div>
+      <h1>oxr-wasm</h1>
+      <p>SoMark's OXR-1.0 in your browser:<br>documents to Markdown on the CPU, with fusor-ai.</p>
+    </div>
+  </div>
+  <script>
+    if (new URLSearchParams(location.search).get('theme') === 'dark') document.documentElement.classList.add('dark');
+  </script>
+</body>
+</html>

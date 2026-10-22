@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>OXR</title>
+  <rect width="64" height="64" rx="16" fill="#272A2C"/>
+  <g fill="none" stroke="#F2F1ED" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 20v-9h9M44 11h9v9M53 44v9h-9M20 53h-9v-9"/>
+  </g>
+  <path d="M23 22l18 20M41 22L23 42" fill="none" stroke="#DE7802" stroke-width="6" stroke-linecap="round"/>
+</svg>

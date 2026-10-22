@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SoMark OXR · documents to Markdown in your browser</title>
+  <meta name="description" content="SoMark's OXR-1.0 document parser running on this device's CPU, compiled to WebAssembly with fusor-ai. Your images never leave the page.">
+  <link rel="icon" href="/brand/oxr.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/katex/katex.min.css">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <App state="{{ App::new() }}">
+    <script type="module" src="./app.js"></script>
+    <main on:engine="state.receive(event)" data-phase="{{ state.phase.get().name() }}" data-loaded="{{ state.loaded.get().is_some() }}">
+      <header class="masthead">
+        <div class="lockup">
+          <img src="/brand/fusor-ai.svg" alt="fusor-ai" width="40" height="40">
+          <span class="times" aria-hidden="true">×</span>
+          <img src="/brand/oxr.svg" alt="" width="36" height="36">
+          <span class="wordmark">SoMark O<span class="x">X</span>R</span>
+        </div>
+        <h1>Documents to Markdown, parsed on your own CPU</h1>
+        <p class="lede">SoMark's OXR-1.0, a 1.3B vision-language model for document parsing, compiled to WebAssembly with fusor-ai. It reads a whole page, text, tables, formulas, code or a chemical structure off an image you pick, and once loaded, no image leaves the page.</p>
+      </header>
+
+      <If condition="{{ state.loading() }}">
+        <section class="card loading" aria-live="polite">
+          <div class="row"><strong>Loading the model</strong><span id="detail" class="muted">{{ state.detail.get() }}</span></div>
+          <progress max="1" value="{{ state.fraction.get() }}"></progress>
+        </section>
+      </If>
+
+      <If condition="{{ state.phase.get() == Phase::Broken }}">
+        <section class="card broken" role="alert">
+          <strong>{{ if state.failed_to_load() { "The model could not load" } else { "The engine stopped" } }}</strong>
+          <p id="detail">{{ state.detail.get() }}</p>
+          <If condition="{{ state.failed_to_load() }}">
+            <p class="muted">A bundle loads only into the runtime built with it. If you built this page yourself, rebuild both with <code>just ui</code>.</p>
+          </If>
+          <div class="row"><a id="reload" class="control primary" href="">Reload</a></div>
+        </section>
+      </If>
+
+      <section class="card source" data-phase="{{ state.phase.get().name() }}">
+        <label id="pick" class="drop" data-empty="{{ state.picture.get().is_none() }}" data-disabled="{{ !state.idle() }}">
+          <canvas id="preview" aria-label="The image to read"></canvas>
+          <span class="hint">Drop, paste or <u>choose</u> an image</span>
+          <input id="file" type="file" accept="image/*" disabled="{{ !state.idle() }}">
+        </label>
+        <fieldset class="tasks" disabled="{{ !state.idle() }}">
+          <legend>Read it as</legend>
+          <div class="choices">
+            <ForEach items="{{ state.tasks() }}" key="{{ |task| task.id }}">
+              <label class="task"><input type="radio" name="task" value="{{ item.get().id }}" bind="state.task.clone()"><span>{{ item.get().label }}</span></label>
+            </ForEach>
+          </div>
+        </fieldset>
+        <div class="row">
+          <button id="read" type="button" class="control primary" disabled="{{ !state.can_read() }}" on:click="state.read()"><span class="dot" aria-hidden="true"></span>{{ state.read_label() }}</button>
+          <button id="stop" type="button" class="control" disabled="{{ state.idle() }}" on:click="state.stop()">Stop</button>
+          <span id="picture" class="muted">{{ state.picture_summary() }}</span>
+        </div>
+        <span id="status" class="muted" aria-live="polite">{{ state.status.get() }}</span>
+      </section>
+
+      <If condition="{{ state.measured.get() }}">
+        <section class="card answer">
+          <div id="answer" class="blocks" aria-live="polite">
+            <ForEach items="{{ state.blocks() }}" key="{{ |block| block.index }}">
+              <div class="block">
+                <If condition="{{ item.get().is_table() }}">
+                  <div class="table-wrap">
+                    <table>
+                      <tbody>
+                        <ForEach items="{{ item.get().rows() }}" key="{{ |row| row.index }}">
+                          <tr>
+                            <ForEach items="{{ item.get().cells }}" key="{{ |cell| cell.column }}">
+                              <td colspan="{{ item.get().columns }}" rowspan="{{ item.get().rows }}">{{ item.get().text }}</td>
+                            </ForEach>
+                          </tr>
+                        </ForEach>
+                      </tbody>
+                    </table>
+                  </div>
+                </If>
+                <If condition="{{ item.get().is_code() }}">
+                  <pre class="code">{{ item.get().text }}</pre>
+                </If>
+                <If condition="{{ item.get().is_formula() }}">
+                  <div class="formula" data-tex="{{ item.get().text }}"></div>
+                </If>
+                <If condition="{{ item.get().is_text() }}">
+                  <div class="prose">
+                    <ForEach items="{{ item.get().segments() }}" key="{{ |segment| segment.index }}"><span class="segment"><If condition="{{ item.get().math }}"><span class="math" data-tex="{{ item.get().text }}"></span></If><If condition="{{ !item.get().math }}">{{ item.get().text }}</If></span></ForEach>
+                  </div>
+                </If>
+              </div>
+            </ForEach>
+          </div>
+          <If condition="{{ state.empty() }}">
+            <p class="muted placeholder">The answer appears here as it is written.</p>
+          </If>
+          <details class="markdown">
+            <summary>Markdown</summary>
+            <pre id="text" class="text">{{ state.text.get() }}</pre>
+          </details>
+          <dl class="metrics">
+            <div><dt>First token</dt><dd id="first">{{ state.metrics.get().first_token() }}</dd><dd class="muted">from Read to the answer's start</dd></div>
+            <div><dt>Speed</dt><dd id="speed">{{ state.metrics.get().speed() }}</dd><dd class="muted">tokens written per second</dd></div>
+            <div><dt>Tokens</dt><dd id="tokens">{{ state.metrics.get().tokens() }}</dd><dd class="muted">in the answer</dd></div>
+            <div><dt>Image</dt><dd id="resized">{{ state.metrics.get().image() }}</dd><dd class="muted">{{ state.metrics.get().image_tokens() }}</dd></div>
+            <div><dt>Network</dt><dd id="requests">{{ state.metrics.get().requests() }}</dd><dd class="muted">requests since the model loaded</dd></div>
+          </dl>
+          <div class="row"><button id="copy" type="button" class="control" disabled="{{ state.empty() }}" on:click="state.copy()">Copy Markdown</button></div>
+        </section>
+      </If>
+
+      <footer class="muted">
+        <span id="runtime">{{ state.summary() }}</span>
+        <span>Built with <a href="https://github.com/fusor-rs/fusor-ai">fusor-ai</a> and <a href="https://fusor.build">fusor</a> · model: <a href="https://huggingface.co/SoMarkAI/OXR-1.0">SoMark OXR-1.0</a> by <a href="https://somark.ai">SoMark</a> (<a href="/model/LICENSE">OXR License</a>) · <a href="https://github.com/fusor-rs/oxr-wasm">source</a></span>
+      </footer>
+    </main>
+  </App>
+</body>
+</html>

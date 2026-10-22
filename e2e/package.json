@@ -1,0 +1,7 @@
+{
+  "name": "oxr-wasm-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Headless Chrome runs of the OXR page: load, read images, check the answers",
+  "dependencies": { "playwright": "1.64.1" }
+}

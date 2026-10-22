@@ -1,0 +1,11 @@
+{
+  "name": "oxr-app",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "dependencies": {
+    "katex": "0.19.0"
+  }
+}
