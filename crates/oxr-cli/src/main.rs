@@ -13,7 +13,6 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use anyhow::{Context, Result};
-use bundle::{Engine as _, Manifest, Store};
 use clap::{Parser, Subcommand};
 use oxr::prompt::Task;
 use oxr::session::{Engine, Request};
@@ -71,17 +70,13 @@ fn task(name: &str) -> Result<Task, String> {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let cores = std::thread::available_parallelism().map_or(4, std::num::NonZero::get);
-    let threads = cli.threads.unwrap_or(8.min(cores.saturating_sub(2)).max(1));
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(threads)
-        .build_global()?;
+    harness::threads(cli.threads)?;
     match cli.command {
         Command::Compile {
             checkpoint,
             out,
             profile,
-        } => compile(&checkpoint, &out, profile)?,
+        } => harness::compile(|| oxr_compile::run(&checkpoint, &out, profile))?,
         Command::Read {
             bundle,
             images,
@@ -89,52 +84,16 @@ fn main() -> Result<()> {
             max_tokens,
         } => {
             let request = Request { task, max_tokens };
-            read(&mut load(&bundle)?, &images, &request)?;
+            read(&mut harness::load(&bundle)?, &images, &request)?;
         }
-        Command::Parity { bundle, goldens } => parity::run(&mut load(&bundle)?, &goldens)?,
+        Command::Parity { bundle, goldens } => parity::run(&mut harness::load(&bundle)?, &goldens)?,
         Command::Bench {
             bundle,
             image,
             task,
-        } => bench::run(&mut load(&bundle)?, &decode(&image)?, task)?,
+        } => bench::run(&mut harness::load(&bundle)?, &decode(&image)?, task)?,
     }
     Ok(())
-}
-
-fn compile(checkpoint: &Path, out: &Path, profile: oxr_compile::Profile) -> Result<()> {
-    let start = Instant::now();
-    let manifest = oxr_compile::run(checkpoint, out, profile)?;
-    let mb = manifest.parts.iter().map(|part| part.bytes).sum::<u64>() as f64 / 1e6;
-    println!(
-        "{} tensors, {} parts, {mb:.1} MB in {:.1}s",
-        manifest.tensors.len(),
-        manifest.parts.len(),
-        start.elapsed().as_secs_f64()
-    );
-    Ok(())
-}
-
-// Loads a bundle directory the way the browser does: every part pushed in order, then hashed.
-pub fn load(dir: &Path) -> Result<Engine> {
-    let start = Instant::now();
-    let manifest = Manifest::parse(&std::fs::read_to_string(dir.join("manifest.json"))?)?;
-    let mut store = Store::new(manifest.clone())?;
-    for (index, part) in manifest.parts.iter().enumerate() {
-        let bytes = std::fs::read(dir.join(&part.file)).with_context(|| part.file.clone())?;
-        for chunk in bytes.chunks(8 << 20) {
-            store.write(index, chunk)?;
-        }
-        store.end_part(index)?;
-    }
-    let engine = Engine::new(&mut store)?;
-    eprintln!(
-        "loaded {} ({:.0} MB) in {:.2}s, {} threads",
-        dir.display(),
-        manifest.tensor_bytes() as f64 / 1e6,
-        start.elapsed().as_secs_f64(),
-        engine.threads()
-    );
-    Ok(engine)
 }
 
 /// The pixels of a PNG or JPEG file, as RGBA.

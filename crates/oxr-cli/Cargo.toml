@@ -16,9 +16,9 @@ doc = false
 [dependencies]
 oxr = { workspace = true, features = ["threads"] }
 oxr-compile.workspace = true
+harness.workspace = true
 bundle.workspace = true
 compile.workspace = true
-rayon.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg"] }

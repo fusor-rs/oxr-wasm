@@ -9,7 +9,9 @@
 use std::path::Path;
 
 use anyhow::{Result, anyhow, ensure};
+use bundle::Stages as _;
 use compile::Checkpoint;
+use harness::parity::compare;
 use oxr::pipeline::Stage;
 use oxr::prompt::{Prompt, Task};
 use oxr::session::Engine;
@@ -64,39 +66,6 @@ impl Goldens {
     }
 }
 
-fn relative_l2(ours: &[f32], reference: &[f32]) -> f64 {
-    let diff: f64 = ours
-        .iter()
-        .zip(reference)
-        .map(|(value, want)| f64::from(value - want).powi(2))
-        .sum();
-    let norm: f64 = reference.iter().map(|want| f64::from(*want).powi(2)).sum();
-    (diff / norm).sqrt()
-}
-
-fn max_abs(ours: &[f32], reference: &[f32]) -> f32 {
-    ours.iter()
-        .zip(reference)
-        .map(|(value, want)| (value - want).abs())
-        .fold(0.0, f32::max)
-}
-
-/// `name: rel …, max abs …` after checking that both have as many values.
-fn compare(name: &str, ours: &[f32], reference: &[f32]) -> Result<String> {
-    ensure!(
-        ours.len() == reference.len(),
-        "{name}: {} values, reference {}",
-        ours.len(),
-        reference.len()
-    );
-    Ok(format!(
-        "{name}: {} values, rel {:.2e}, max abs {:.2e}",
-        ours.len(),
-        relative_l2(ours, reference),
-        max_abs(ours, reference)
-    ))
-}
-
 /// Whether the prompt's ids are the reference's: its text ids one for one, and the image's
 /// rows, its indicators included, where the reference holds its (negative) image placeholders.
 fn same_ids(prompt: &Prompt, reference: &[i64]) -> bool {
@@ -129,7 +98,7 @@ pub fn run(engine: &mut Engine, goldens: &Path) -> Result<()> {
         .filter_map(Result::ok)
         .find(|prompt| same_ids(prompt, &goldens.ids))
         .ok_or_else(|| anyhow!("prompt: no task's ids are the reference's"))?;
-    for stage in Stage::ALL {
+    for &stage in Stage::ALL {
         let report = match stage {
             Stage::Preprocess => preprocess(&goldens)?,
             Stage::Embed => {
@@ -165,7 +134,7 @@ fn preprocess(goldens: &Goldens) -> Result<String> {
         patches.grid,
         goldens.grid
     );
-    compare("preprocess", &patches.values, &goldens.patches)
+    Ok(compare("preprocess", &patches.values, &goldens.patches)?)
 }
 
 /// The last prompt row's hidden state and logits.
