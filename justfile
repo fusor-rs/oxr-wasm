@@ -12,14 +12,14 @@ images := "fixtures/images"
 # The threaded builds' shared memory: the bundle, the language model's cache and a full page's
 # vision activations need more than fusor-ai's 2 GB default.
 export MAX_MEMORY := "4294967296"
-# The reference the goldens come from (scripts/golden-harness): OXR-1.0's modeling code in
-# transformers, pinned.
+# The reference the goldens come from (vendor/fusor-ai/models/oxr/reference): OXR-1.0's modeling
+# code in transformers, pinned.
 reference := "uv run --no-project --python 3.12 --with transformers==5.13.1 --with torch==2.14.1 --with torchvision==0.29.1 --with numpy==2.4.4 --with pillow==12.2.0 --with safetensors==0.8.0 python"
 
 host:
     bash -n scripts/fetch-checkpoint.sh
     bash -n scripts/fetch-images.sh
-    python3 -m py_compile scripts/golden-harness/dump.py benchmarks/pytorch.py
+    python3 -m py_compile benchmarks/pytorch.py
     node --check app/web/app.js
     node --check app/engine/worker.js
     node --check scripts/node-smoke.mjs
@@ -45,7 +45,8 @@ ui: model runtimes page serve
 images:
     scripts/fetch-images.sh {{images}}
 
-# Every stage against the reference's goldens (scripts/golden-harness), with the f32 bundle.
+# Every stage against the reference's goldens (vendor/fusor-ai/models/oxr/reference), with the f32
+# bundle.
 parity: native
     test -f {{goldens}}/golden_f32_textline.safetensors || just goldens
     scripts/fetch-checkpoint.sh {{checkpoint}}
@@ -57,7 +58,7 @@ parity: native
 # (fixtures/references.json), from the reference in f32 on the CPU (minutes).
 goldens: images
     scripts/fetch-checkpoint.sh {{checkpoint}}
-    {{reference}} scripts/golden-harness/dump.py {{checkpoint}} {{images}} fixtures/tasks.json {{goldens}} fixtures/references.json
+    {{reference}} {{fusor_ai}}/models/oxr/reference/dump.py {{checkpoint}} {{images}} fixtures/tasks.json {{goldens}} fixtures/references.json
 
 bench: native images
     target/release/oxr bench {{model}} {{images}}/book.jpg --task page

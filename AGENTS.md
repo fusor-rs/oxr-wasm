@@ -13,10 +13,11 @@ invent scope, features or options beyond the task.
 
 ## Repository
 
-- `crates/oxr-runtime`: the wasm-bindgen surface of the model (bundle parts and
-  RGBA pixels in, the answer's text out), built as four browser runtimes.
-- `crates/oxr-cli`: the native CLI `oxr` (`compile`, `read`, `bench`,
-  `parity`).
+- `vendor/fusor-ai/models/oxr/runtime`: the wasm-bindgen surface of the model
+  (bundle parts and RGBA pixels in, the answer's text out), built as four
+  browser runtimes.
+- `vendor/fusor-ai/models/oxr/cli`: the native CLI `oxr` (`compile`, `read`,
+  `bench`, `parity`).
 - `app/`: the page, a [fusor](https://github.com/fusor-rs/fusor) app with its own
   Cargo workspace (fusor pins wasm-bindgen 0.2.117, the runtime 0.2.129): the
   image, the task, reading and the live measurements as Rust signals in

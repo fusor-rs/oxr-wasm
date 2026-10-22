@@ -7,22 +7,20 @@ benchmark). Clone with `--recurse-submodules` (or run `just tools`, which initia
 
 The model, its compiler and the toolkit live in
 [fusor-ai](https://github.com/fusor-rs/fusor-ai). Everything this repository takes from it
-comes from `vendor/fusor-ai`, a submodule pinned to a commit pushed to fusor-ai: the
-`fusor-ai-*` crates, as path dependencies in the root `Cargo.toml`, the browser host scripts,
-the runtime build and the import check. To move to another fusor-ai commit, check it out in the
-submodule (`git -C vendor/fusor-ai checkout <commit>`) in one change of its own, with the
-checks below. Never add a crates.io pin, a `[patch]` table or a path to a fusor-ai checkout
-beside this one.
+comes from `vendor/fusor-ai`, a submodule pinned to a commit pushed to fusor-ai: the model's
+crates in `models/oxr`, its runtime and CLI among them, the browser host scripts, the runtime
+build and the import check. To move to another fusor-ai commit, check it out in the submodule
+(`git -C vendor/fusor-ai checkout <commit>`) in one change of its own, with the checks below.
+Never add a crates.io pin, a `[patch]` table or a path to a fusor-ai checkout beside this one.
 
-Run `just check` before considering a change complete. It formats, tests and lints the crates
-natively, the runtime for `wasm32-unknown-unknown` (SIMD128 and relaxed SIMD) and the page,
-and syntax-checks the scripts. `just ui` builds the page and serves it; the page is a
-[fusor](https://github.com/fusor-rs/fusor) app in `app/`, built with the fusor CLI that
-`just tools` installs into `.tools/`. A change to the runtime, the page, the CLI or fusor-ai
-also needs `just build` once, then `just runtimes`, `just smoke`, `just parity` and
-`just e2e`, and a change meant to move speed `just bench`. Say in the pull request what they
-showed (parity numbers, first-token time, tokens per second, character error rate) and which
-fusor-ai commit they ran against.
+Run `just check` before considering a change complete. It formats and lints the page and
+syntax-checks the scripts; fusor-ai's own check covers the runtime and the CLI. `just ui`
+builds the page and serves it; the page is a [fusor](https://github.com/fusor-rs/fusor) app in
+`app/`, built with the fusor CLI that `just tools` installs into `.tools/`. A change to the
+runtime, the page, the CLI or fusor-ai also needs `just build` once, then `just runtimes`,
+`just smoke`, `just parity` and `just e2e`, and a change meant to move speed `just bench`. Say
+in the pull request what they showed (parity numbers, first-token time, tokens per second,
+character error rate) and which fusor-ai commit they ran against.
 
 `just images` downloads the fixed images the checks read: five of PaddleOCR's own test files
 (Apache-2.0) at a pinned commit, sha256-checked, each read with the task `fixtures/tasks.json`
@@ -30,7 +28,7 @@ gives it: a Chinese text line, a table, a formula, a seal (read as text) and a p
 book page (read as a whole page).
 
 `just goldens` runs the reference, OXR-1.0's own modeling code in transformers 5.13.1 in f32 on
-the CPU (`scripts/golden-harness`), on every image: its answers go to
+the CPU (`vendor/fusor-ai/models/oxr/reference`), on every image: its answers go to
 `fixtures/references.json`, and the tensors of every stage on the first image to
 `fixtures/goldens`. Three settings make it the model as SoMark serves it: the Pillow image
 processor, the pixel budget of SoMark's vLLM plugin, and the image's indicators embedded as the
