@@ -16,7 +16,11 @@ const requestedThreads = Number.parseInt(params.get('threads') ?? '', 10);
 const THREADS = Math.min(cores, requestedThreads > 0 ? requestedThreads : Math.max(1, Math.min(8, cores - 2)));
 // The bundle served next to the page (`just serve` mounts dist/model there); `?model=<url>` loads
 // another one, `?build=web-single` pins a runtime build.
-const MODEL_URL = new URL(params.get('model') ?? 'model/', document.baseURI).href;
+// A Hugging Face Space holds at most 1 GB, so the Space loads the bundle from the model repo
+// fusorlabs/oxr-1.0-web (`just deploy-model`) instead of from beside the page.
+const HOSTED_MODEL = 'https://huggingface.co/fusorlabs/oxr-1.0-web/resolve/main/';
+const DEFAULT_MODEL = location.hostname.endsWith('.hf.space') ? HOSTED_MODEL : 'model/';
+const MODEL_URL = new URL(params.get('model') ?? DEFAULT_MODEL, document.baseURI).href;
 
 const mb = (bytes) => `${(bytes / 1e6).toFixed(1)} MB`;
 

@@ -85,12 +85,19 @@ deploy environment="production":
     vercel build {{ if environment == "production" { "--prod" } else { "" } }} --yes
     vercel deploy --prebuilt {{ if environment == "production" { "--prod" } else { "" } }} --yes
 
+# The Space holds at most 1 GB, so it gets the page, the runtimes and the model's licenses, and the
+# page loads the bundle from the model repo fusorlabs/oxr-1.0-web (`just deploy-model`). The Space must
+# already exist as a static Space: creating it with the upload makes a Gradio Space, which
+# Hugging Face refuses for a free organization.
 # The site to the Hugging Face Space fusorlabs/oxr-wasm, configured by space/README.md.
 deploy-space: site
     #!/usr/bin/env bash
     set -euo pipefail
-    cp space/README.md target/site/
-    uv run --no-project --with huggingface_hub==0.36.2 python - target/site <<'PY'
+    rm -rf target/space
+    rsync -a --exclude /model target/site/ target/space/
+    rsync -a --include '*/' --include 'LICENSE*' --include NOTICE --exclude '*' target/site/model/ target/space/model/
+    cp space/README.md target/space/
+    uv run --no-project --with huggingface_hub==0.36.2 python - target/space <<'PY'
     import sys
     from huggingface_hub import HfApi
 
@@ -100,6 +107,27 @@ deploy-space: site
         folder_path=sys.argv[1],
         delete_patterns="*",
         commit_message="Deploy oxr-wasm {{version}}",
+    )
+    PY
+
+# Deploy it before the Space whenever the bundle changes: the runtime only loads a bundle compiled
+# with the same fusor-ai.
+# The site's bundle, with space/MODEL.md as its card, to the model repo fusorlabs/oxr-1.0-web.
+deploy-model: site
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cp space/MODEL.md target/site/model/README.md
+    uv run --no-project --with huggingface_hub==0.36.2 python - target/site/model <<'PY'
+    import sys
+    from huggingface_hub import HfApi
+
+    api = HfApi()
+    api.create_repo("fusorlabs/oxr-1.0-web", exist_ok=True)
+    api.upload_folder(
+        repo_id="fusorlabs/oxr-1.0-web",
+        folder_path=sys.argv[1],
+        delete_patterns="*",
+        commit_message="Deploy the oxr-wasm {{version}} bundle",
     )
     PY
 

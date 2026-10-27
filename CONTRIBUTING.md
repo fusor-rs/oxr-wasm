@@ -68,7 +68,10 @@ correct across recompiles, and the page deletes the parts of earlier bundles fro
 after loading a new one.
 [vercel.json](vercel.json) does that for Vercel (`just deploy`, prebuilt files, after
 `vercel link`), and [space/README.md](space/README.md) for a static Hugging Face Space
-(`just deploy-space`, with [uv](https://docs.astral.sh/uv/) after `hf auth login`). The site
+(`just deploy-model deploy-space`, with [uv](https://docs.astral.sh/uv/) after `hf auth login`): a
+Space holds at most 1 GB, so the bundle goes to the model repo
+[fusorlabs/oxr-1.0-web](https://huggingface.co/fusorlabs/oxr-1.0-web), described by
+[space/MODEL.md](space/MODEL.md), and the page loads it from there when it runs on a Space. The site
 ships the model's license beside the bundle (`model/LICENSE`) and the page credits SoMark OXR, as
 the OXR License asks of an online service; keep both.
 

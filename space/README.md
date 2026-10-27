@@ -6,6 +6,7 @@ app_file: index.html
 pinned: false
 license: other
 models:
+  - fusorlabs/oxr-1.0-web
   - SoMarkAI/OXR-1.0
 custom_headers:
   cross-origin-embedder-policy: require-corp
