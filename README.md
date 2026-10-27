@@ -11,6 +11,8 @@
 
 **A formula read to its first token in 1.3 s, the answer written at up to 210 tokens a second**, in Chrome on an Apple M4 Pro, eight threads. [Benchmarks](benchmarks.md)
 
+<a href="https://huggingface.co/spaces/fusorlabs/oxr-wasm"><img src="assets/demo/demo.gif" alt="oxr-wasm in Chrome: a photographed book page parsed to Markdown, formula included, by SoMark OXR-1.0 on the CPU at 171 tokens a second, zero network requests" width="720"></a>
+
 Drop, paste or pick an image of a document and get it back as Markdown: a whole page in reading order, or a region's text, a table, a formula, code or a chemical structure, read by SoMark's [OXR-1.0](https://huggingface.co/SoMarkAI/OXR-1.0), a 1.3B vision-language model for document parsing, computed on your own device. No server, no API key, no GPU required, and once the model has loaded, no image leaves the page.
 
 oxr-wasm is the app around the model: a [fusor](https://github.com/fusor-rs/fusor) page, the browser runtime and a native CLI. The model itself, compiled to WebAssembly, is built with [fusor-ai](https://github.com/fusor-rs/fusor-ai), the toolkit for AI runtimes in Rust and WebAssembly, from the published weights.
